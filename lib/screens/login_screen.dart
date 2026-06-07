@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
           subtitle: 'ניהול נהגים ומסלולים',
           color: const Color(0xFF1565C0),
           onTap: () async {
-            final ok = await _showPinDialog('001324');
+            final ok = await _showPinDialog('123456');
             if (ok && mounted) {
               Navigator.push(
                 context,

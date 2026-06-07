@@ -1,0 +1,9 @@
+[build]
+  publish = "build/web"
+  command = "bash netlify_build.sh"
+  functions = "netlify/functions"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

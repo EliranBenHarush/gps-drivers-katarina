@@ -1278,10 +1278,19 @@ class _ManagerScreenState extends State<ManagerScreen> {
           final pin = pinCtrl.text.trim().isEmpty ? '1111' : pinCtrl.text.trim();
 
           try {
-            await FirestoreService.addDriver(name, pin);
+            await FirestoreService.addDriver(name, pin)
+                .timeout(const Duration(seconds: 12));
             if (!ctx.mounted) return;
             Navigator.pop(ctx);
             if (mounted) _snack('הנהג נוסף בהצלחה');
+          } on TimeoutException {
+            if (ctx.mounted) setS(() => isSaving = false);
+            if (mounted) {
+              _snack(
+                'שמירת הנהג נכשלה - בדוק חיבור או הרשאות Firestore',
+                isError: true,
+              );
+            }
           } catch (_) {
             if (ctx.mounted) setS(() => isSaving = false);
             if (mounted) _snack('לא ניתן להוסיף נהג, נסה שוב', isError: true);

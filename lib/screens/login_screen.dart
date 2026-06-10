@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config.dart';
 import '../models/driver.dart';
 import '../services/firestore_service.dart';
 import 'manager_screen.dart';
@@ -144,7 +145,18 @@ class _LoginScreenState extends State<LoginScreen> {
           subtitle: 'ניהול נהגים ומסלולים',
           color: const Color(0xFF1565C0),
           onTap: () async {
-            final ok = await _showPinDialog('123456');
+            if (AppConfig.adminPin.isEmpty) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('PIN מנהל לא מוגדר בסביבת ההרצה'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              return;
+            }
+            final ok = await _showPinDialog(AppConfig.adminPin);
             if (ok && mounted) {
               Navigator.push(
                 context,

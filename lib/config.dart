@@ -5,6 +5,12 @@ class AppConfig {
     defaultValue: '',
   );
 
+  // PIN מנהל מוגדר בעת הרצה עם: --dart-define=ADMIN_PIN=your-pin
+  static const String adminPin = String.fromEnvironment(
+    'ADMIN_PIN',
+    defaultValue: '',
+  );
+
   // סגנון מפה
   static const String mapboxStyle = 'streets-v12';
 }

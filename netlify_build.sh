@@ -23,6 +23,7 @@ flutter create . --platforms web
 flutter pub get
 flutter build web \
   --dart-define=MAPBOX_TOKEN=${MAPBOX_TOKEN} \
+  --dart-define=ADMIN_PIN=${ADMIN_PIN} \
   --release
 
 # Patch index.html with Apple PWA meta tags so iPhone allows "Add to Home Screen"

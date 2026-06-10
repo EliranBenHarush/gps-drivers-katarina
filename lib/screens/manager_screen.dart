@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 import '../models/driver.dart';
@@ -1291,7 +1292,14 @@ class _ManagerScreenState extends State<ManagerScreen> {
                 isError: true,
               );
             }
-          } catch (_) {
+          } on FirebaseException catch (e) {
+            debugPrint('Failed to add driver: ${e.code} ${e.message}');
+            if (ctx.mounted) setS(() => isSaving = false);
+            if (mounted) {
+              _snack('שגיאת Firebase: ${e.code}', isError: true);
+            }
+          } catch (e) {
+            debugPrint('Failed to add driver: $e');
             if (ctx.mounted) setS(() => isSaving = false);
             if (mounted) _snack('לא ניתן להוסיף נהג, נסה שוב', isError: true);
           }

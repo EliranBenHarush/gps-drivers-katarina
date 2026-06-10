@@ -70,6 +70,11 @@ class _ManagerScreenState extends State<ManagerScreen> {
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
+    if (_selectedDriver == null) {
+      setState(() { _suggestions = []; _searching = false; });
+      _snack('חייב לבחור נהג לפני הוספת כתובת', isError: true);
+      return;
+    }
     if (query.trim().length < 2) {
       setState(() { _suggestions = []; _searching = false; });
       return;
@@ -87,6 +92,12 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 
   Future<void> _addStop(Map<String, dynamic> place) async {
+    if (_selectedDriver == null) {
+      setState(() { _suggestions = []; _searching = false; });
+      _searchFocus.unfocus();
+      _snack('חייב לבחור נהג לפני הוספת כתובת', isError: true);
+      return;
+    }
     _debounce?.cancel();
     setState(() {
       _suggestions = [];
@@ -914,14 +925,18 @@ class _ManagerScreenState extends State<ManagerScreen> {
   }
 
   Widget _buildSearchBar() {
+    final hasDriver = _selectedDriver != null;
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: TextField(
         controller: _searchCtrl,
         focusNode: _searchFocus,
+        readOnly: !hasDriver,
         decoration: InputDecoration(
-          hintText: 'חפש כתובת להוספה...',
+          hintText: hasDriver
+              ? 'חפש כתובת להוספה...'
+              : 'בחר נהג לפני הוספת כתובת',
           prefixIcon: _searching
               ? const Padding(
                   padding: EdgeInsets.all(14),
@@ -944,6 +959,12 @@ class _ManagerScreenState extends State<ManagerScreen> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           isDense: true,
         ),
+        onTap: hasDriver
+            ? null
+            : () => _snack(
+                  'חייב לבחור נהג לפני הוספת כתובת',
+                  isError: true,
+                ),
         onChanged: _onSearchChanged,
       ),
     );

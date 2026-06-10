@@ -1263,60 +1263,89 @@ class _ManagerScreenState extends State<ManagerScreen> {
   void _showAddDriverDialog() {
     final nameCtrl = TextEditingController();
     final pinCtrl = TextEditingController();
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => Directionality(
-        textDirection: TextDirection.rtl,
-        child: AlertDialog(
-          title: const Text('הוסף נהג חדש'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'שם הנהג',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
-                ),
-                autofocus: true,
-                textInputAction: TextInputAction.next,
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: pinCtrl,
-                decoration: const InputDecoration(
-                  labelText: 'קוד כניסה (PIN)',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.lock_outline),
-                  hintText: 'לדוגמה: 1234',
-                ),
-                keyboardType: TextInputType.number,
-                obscureText: false,
-                onSubmitted: (_) => _submitAddDriver(nameCtrl, pinCtrl, ctx),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('ביטול')),
-            ElevatedButton(
-                onPressed: () => _submitAddDriver(nameCtrl, pinCtrl, ctx),
-                child: const Text('הוסף')),
-          ],
-        ),
-      ),
-    );
-  }
+      barrierDismissible: false,
+      builder: (ctx) {
+        bool isSaving = false;
 
-  Future<void> _submitAddDriver(
-      TextEditingController nameCtrl,
-      TextEditingController pinCtrl,
-      BuildContext ctx) async {
-    if (nameCtrl.text.trim().isEmpty) return;
-    final pin = pinCtrl.text.trim().isEmpty ? '1111' : pinCtrl.text.trim();
-    await FirestoreService.addDriver(nameCtrl.text.trim(), pin);
-    if (ctx.mounted) Navigator.pop(ctx);
+        Future<void> submit(StateSetter setS) async {
+          if (isSaving) return;
+          final name = nameCtrl.text.trim();
+          if (name.isEmpty) return;
+
+          setS(() => isSaving = true);
+          final pin = pinCtrl.text.trim().isEmpty ? '1111' : pinCtrl.text.trim();
+
+          try {
+            await FirestoreService.addDriver(name, pin);
+            if (!ctx.mounted) return;
+            Navigator.pop(ctx);
+            if (mounted) _snack('הנהג נוסף בהצלחה');
+          } catch (_) {
+            if (ctx.mounted) setS(() => isSaving = false);
+            if (mounted) _snack('לא ניתן להוסיף נהג, נסה שוב', isError: true);
+          }
+        }
+
+        return Directionality(
+          textDirection: TextDirection.rtl,
+          child: StatefulBuilder(
+            builder: (ctx, setS) => AlertDialog(
+              title: const Text('הוסף נהג חדש'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameCtrl,
+                    enabled: !isSaving,
+                    decoration: const InputDecoration(
+                      labelText: 'שם הנהג',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    autofocus: true,
+                    textInputAction: TextInputAction.next,
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: pinCtrl,
+                    enabled: !isSaving,
+                    decoration: const InputDecoration(
+                      labelText: 'קוד כניסה (PIN)',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.lock_outline),
+                      hintText: 'לדוגמה: 1234',
+                    ),
+                    keyboardType: TextInputType.number,
+                    obscureText: false,
+                    onSubmitted: (_) => submit(setS),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving ? null : () => Navigator.pop(ctx),
+                  child: const Text('ביטול'),
+                ),
+                ElevatedButton(
+                  onPressed: isSaving ? null : () => submit(setS),
+                  child: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('הוסף'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ).whenComplete(() {
+      nameCtrl.dispose();
+      pinCtrl.dispose();
+    });
   }
 }
